@@ -1,10 +1,8 @@
 {
   "name": "coze-jwt-backend",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
-    "@coze/api": "^1.0.12",
-    "cors": "^2.8.5",
+    "@coze/node-sdk": "^1.0.0",
     "express": "^4.21.0"
   }
 }

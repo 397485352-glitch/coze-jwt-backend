@@ -1,43 +1,21 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能体公开内测</title>
-</head>
-<body>
-<div id="coze-chat" style="width:100%;height:95vh;"></div>
-<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0/cn/index.js"></script>
-<script>
-// =========修改这里==========
-const BOT_ID = "7673300509398269998";
-const BACKEND_TOKEN_API = "https://abc‑coze‑jwt‑backend.onrender.com/api/get‑coze‑token";
-// ==========================
+app.get('/api/get-coze-token', (req, res) => {
+  try {
+    const COZE_APP_ID = process.env.COZE_APP_ID;
+    const COZE_KEY_ID = process.env.COZE_KEY_ID;
+    const COZE_AUD = process.env.COZE_AUD;
+    let privateKeyRaw = process.env.COZE_PRIVATE_KEY;
+    const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
 
-async function initChatSdk(){
-  const resp = await fetch(BACKEND_TOKEN_API);
-  const data = await resp.json();
-  const accessToken = data.access_token;
-
-  new CozeWebSDK.WebChatClient({
-    config:{ bot_id: BOT_ID },
-    auth:{
-      type:"token",
-      token: accessToken,
-      onRefreshToken: async () => {
-        const r = await fetch(BACKEND_TOKEN_API);
-        const d = await r.json();
-        return d.access_token;
-      }
-    },
-    ui:{ container:"coze-chat" },
-    userInfo:{
-      id:"tester_"+Math.random().toString(36),
-      nickname:"内测测试用户"
-    }
-  });
-}
-initChatSdk();
-</script>
-</body>
-</html>
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: COZE_APP_ID,
+      aud: COZE_AUD,
+      iat: now,
+      exp: now + 3600
+    };
+    const token = jwt.sign(payload, privateKey, { algorithm: 'RS256', kid: COZE_KEY_ID });
+    res.json({ jwt_token: token });
+  } catch (err) {
+    res.status(500).json({ error: err.message, logid: err.logid || '' });
+  }
+});

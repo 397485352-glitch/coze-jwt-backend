@@ -1,27 +1,39 @@
-import express from 'express';
-import cors from 'cors';
-import { getJWTToken, COZE_CN_BASE_URL } from '@coze/api';
-
+const express = require('express');
+const { getJWTToken } = require('@coze/node-sdk');
 const app = express();
-app.use(cors());
+const port = process.env.PORT || 3000;
 
-app.get('/api/get-coze-token', async (req, res) => {
+// 跨域处理
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
+
+// 托管前端页面 index.html
+app.use(express.static('./'));
+
+app.get('/token', async (req, res) => {
   try {
+    const rawKey = process.env.COZE_PRIVATE_KEY;
+    // 将环境变量内字面 \n 转为真实换行符，解决Render丢失换行问题
+    const privateKey = rawKey.replace(/\\n/g, '\n');
+
+    // 调试日志，上线后可以删除
+    console.log("key preview:", JSON.stringify(privateKey.substring(0, 60)));
+
     const tokenResp = await getJWTToken({
-      baseURL: COZE_CN_BASE_URL,
-      appId: process.env.COZE_APP_ID,
+      appid: process.env.COZE_APP_ID,
       keyid: process.env.COZE_KEY_ID,
       aud: process.env.COZE_AUD,
-      privateKey: process.env.COZE_PRIVATE_KEY
+      privateKey: privateKey
     });
-    res.json({ access_token: tokenResp.access_token });
+    res.json(tokenResp);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: String(err.message) });
+    res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`backend run on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });

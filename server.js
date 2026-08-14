@@ -1,5 +1,5 @@
 const express = require('express');
-const { getJWTToken } = require('@coze/node-sdk');
+const { getJWTToken } = require('@coze/api');
 const app = express();
 const port = process.env.PORT || 3000;
 
